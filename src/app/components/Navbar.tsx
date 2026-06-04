@@ -1,0 +1,530 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router';
+import {
+  Search, Sun, Moon, Globe, Heart, ShoppingBag,
+  User, ChevronDown, X, Clock, Smartphone, Menu, Loader2
+} from 'lucide-react';
+import { useApp } from '../context/AppContext';
+
+const CASE_IMG = 'https://images.unsplash.com/photo-1593830566460-2464575a9a24?w=600';
+
+export function Navbar() {
+  const {
+    darkMode, toggleDarkMode,
+    language, toggleLanguage, isRTL,
+    cartItemCount, setCartOpen, wishlist,
+    t, products, settings, selectedCountry, setSelectedCountry, getCurrencySymbol
+  } = useApp();
+
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [query, setQuery] = useState('');
+  const [liveResults, setLiveResults] = useState<any[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [megaMenu, setMegaMenu] = useState<null | 'samsung' | 'iphone'>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const searchRef = useRef<HTMLDivElement>(null);
+  const megaMenuRef = useRef<HTMLNavElement>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Close search and mega menu dropdowns on click outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchFocused(false);
+      }
+      if (megaMenuRef.current && !megaMenuRef.current.contains(e.target as Node)) {
+        setMegaMenu(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  // Debounced live search
+  useEffect(() => {
+    if (query.trim().length <= 1) {
+      setLiveResults([]);
+      setFocusedIndex(-1);
+      return;
+    }
+
+    setSearchLoading(true);
+    const handler = setTimeout(() => {
+      fetch(`http://localhost:5000/api/products?q=${encodeURIComponent(query)}&limit=5`)
+        .then((res) => res.json())
+        .then((data) => {
+          setLiveResults(data.products || []);
+          setSearchLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setSearchLoading(false);
+        });
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [query]);
+
+  // Keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev < liveResults.length - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setFocusedIndex((prev) => (prev > 0 ? prev - 1 : liveResults.length - 1));
+    } else if (e.key === 'Enter') {
+      if (focusedIndex >= 0 && liveResults[focusedIndex]) {
+        navigate(`/product/${liveResults[focusedIndex]._id}`);
+        setSearchFocused(false);
+        setQuery('');
+      } else if (query.trim()) {
+        navigate(`/search?q=${encodeURIComponent(query)}`);
+        setSearchFocused(false);
+        setQuery('');
+      }
+    } else if (e.key === 'Escape') {
+      setSearchFocused(false);
+    }
+  };
+
+  const handleSearchSubmit = () => {
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query)}`);
+      setSearchFocused(false);
+      setQuery('');
+    }
+  };
+
+  // Static list for categories/brands
+  const samsungModels = products
+    .filter((p) => p.category === 'samsung')
+    .map((p) => p.model)
+    .filter((value, index, self) => self.indexOf(value) === index)
+    .slice(0, 6);
+
+  const iphoneModels = products
+    .filter((p) => p.category === 'apple')
+    .map((p) => p.model)
+    .filter((value, index, self) => self.indexOf(value) === index)
+    .slice(0, 6);
+
+  return (
+    <>
+      {/* Search Backdrop with smooth opacity fade */}
+      <div
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300 ${
+          searchFocused ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setSearchFocused(false)}
+      />
+
+      <header
+        className="sticky top-0 z-50 w-full backdrop-blur-md transition-colors duration-300"
+        style={{
+          background: 'var(--ks-bg)',
+          borderBottom: '1px solid var(--ks-border)',
+          boxShadow: 'var(--ks-shadow-sm)',
+        }}
+        dir={isRTL ? 'rtl' : 'ltr'}
+      >
+        <div className="max-w-[1440px] mx-auto px-4 lg:px-8 h-16 flex items-center justify-between gap-4">
+          
+          {/* Mobile hamburger menu */}
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="lg:hidden p-2 rounded-xl text-[var(--ks-text-secondary)] hover:bg-[var(--ks-bg-secondary)]"
+            aria-label="Toggle Menu"
+            aria-expanded={mobileMenuOpen}
+          >
+            <Menu size={22} />
+          </button>
+
+          {/* Logo */}
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 shrink-0 group focus:outline-none"
+          >
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105"
+              style={{ background: 'linear-gradient(135deg, var(--ks-blue) 0%, var(--ks-blue-dark) 100%)' }}
+            >
+              <span className="font-extrabold text-white text-lg">K</span>
+            </div>
+            <span className="font-extrabold tracking-tight text-xl hidden sm:inline-block" style={{ color: 'var(--ks-text)' }}>
+              {settings?.siteName[language] || t('navbar.title')}
+            </span>
+          </button>
+
+          {/* Search bar */}
+          <div ref={searchRef} className="flex-1 max-w-xl mx-auto relative z-50">
+            <div
+              className="flex items-center rounded-2xl px-4 gap-3 transition-all duration-300"
+              style={{
+                background: searchFocused ? 'var(--ks-bg)' : 'var(--ks-bg-secondary)',
+                border: searchFocused ? '2px solid var(--ks-blue)' : '2px solid transparent',
+                height: '44px',
+                boxShadow: searchFocused ? 'var(--ks-shadow-md)' : 'none',
+              }}
+            >
+              <Search size={18} className="text-[var(--ks-text-muted)] shrink-0" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onKeyDown={handleKeyDown}
+                placeholder={t('navbar.search')}
+                className="flex-1 bg-transparent outline-none text-sm font-medium w-full"
+                style={{ color: 'var(--ks-text)', direction: /[\u0600-\u06FF]/.test(query) ? 'rtl' : 'ltr' }}
+                aria-label="Search"
+                aria-expanded={searchFocused}
+              />
+              {searchLoading && (
+                <Loader2 size={16} className="animate-spin text-[var(--ks-blue)] shrink-0" />
+              )}
+              {query && !searchLoading && (
+                <button
+                  onClick={() => {
+                    setQuery('');
+                    setLiveResults([]);
+                  }}
+                  className="p-1 rounded-full hover:bg-[var(--ks-bg-secondary)]"
+                >
+                  <X size={14} className="text-[var(--ks-text-secondary)]" />
+                </button>
+              )}
+            </div>
+
+            {/* Live Search Results Dropdown */}
+            {searchFocused && (
+              <div
+                className="absolute top-full mt-3 w-full rounded-2xl overflow-hidden shadow-2xl z-50 border border-[var(--ks-border)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                style={{ background: 'var(--ks-bg)' }}
+              >
+                {liveResults.length > 0 ? (
+                  <div className="p-2 space-y-1">
+                    {liveResults.map((p, idx) => {
+                      const nameEn = p.name?.en || p.name || '';
+                      const nameAr = p.name?.ar || '';
+                      const primaryName = language === 'ar' ? (nameAr || nameEn) : nameEn;
+                      const secondaryName = language === 'ar' ? nameEn : nameAr;
+                      return (
+                        <button
+                          key={p._id}
+                          onClick={() => {
+                            navigate(`/product/${p._id}`);
+                            setSearchFocused(false);
+                            setQuery('');
+                          }}
+                          className={`w-full flex items-center gap-3 p-2 rounded-xl transition-colors text-left ${
+                            idx === focusedIndex ? 'bg-[var(--ks-bg-tertiary)]' : 'hover:bg-[var(--ks-bg-secondary)]'
+                          } ${isRTL ? 'text-right' : 'text-left'}`}
+                          style={{ direction: isRTL ? 'rtl' : 'ltr' }}
+                        >
+                          <img
+                            src={p.images?.[0]?.url || p.image || CASE_IMG}
+                            alt={primaryName}
+                            className="w-10 h-10 rounded-lg object-cover border border-[var(--ks-border)]"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold truncate" style={{ color: 'var(--ks-text)' }}>
+                              {primaryName} {secondaryName && <span className="text-xs text-[var(--ks-text-muted)] font-normal">({secondaryName})</span>}
+                            </p>
+                            <p className="text-xs text-[var(--ks-text-muted)] truncate capitalize">
+                              {p.brand} - {p.model}
+                            </p>
+                          </div>
+                          <span className="text-sm font-bold shrink-0" style={{ color: 'var(--ks-blue)' }}>
+                            {(p.pricing?.[selectedCountry] || p.pricing?.default || p.price || 0).toLocaleString()} EGP
+                          </span>
+                        </button>
+                      );
+                    })}
+                    <div className="p-2 border-t border-[var(--ks-border)] bg-[var(--ks-bg-secondary)]">
+                      <button
+                        onClick={() => {
+                          navigate(`/search?q=${encodeURIComponent(query)}`);
+                          setSearchFocused(false);
+                          setQuery('');
+                        }}
+                        className="w-full text-center py-2 text-xs font-bold text-[var(--ks-blue)] hover:underline block"
+                      >
+                        {language === 'ar' ? `مشاهدة جميع النتائج لـ "${query}"` : `See all results for "${query}"`}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  query.trim().length > 1 && (
+                    <div className="p-4 text-center text-sm text-[var(--ks-text-muted)] font-medium">
+                      {t('navbar.noResults')}
+                    </div>
+                  )
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Right Action Icons */}
+          <div className="flex items-center gap-2 shrink-0">
+
+
+            {/* Language Switcher Switch Toggle */}
+            <div className="flex items-center gap-1.5 px-1 py-1 rounded-full border border-[var(--ks-border)] bg-[var(--ks-bg-secondary)]" dir="ltr">
+              <button
+                onClick={toggleLanguage}
+                className="relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-1 border-transparent transition-colors duration-300 ease-in-out focus:outline-none"
+                style={{ backgroundColor: language === 'en' ? 'var(--ks-blue)' : 'var(--ks-gold)' }}
+                role="switch"
+                aria-checked={language === 'ar'}
+                aria-label="Switch language"
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4.5 w-4.5 transform rounded-full bg-white shadow-md transition duration-300 ease-in-out ${
+                    language === 'ar' ? 'translate-x-4.5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+              <span className="text-[10px] font-extrabold pr-2 text-[var(--ks-text-secondary)] uppercase">
+                {language === 'en' ? 'EN' : 'AR'}
+              </span>
+            </div>
+
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-xl transition-all duration-300 hover:bg-[var(--ks-bg-secondary)] text-[var(--ks-text-secondary)] hover:text-[var(--ks-blue)]"
+              aria-label="Toggle Theme"
+            >
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
+            {/* Wishlist */}
+            <button
+              onClick={() => navigate('/wishlist')}
+              className="p-2 rounded-xl transition-all duration-300 hover:bg-[var(--ks-bg-secondary)] text-[var(--ks-text-secondary)] hover:text-[var(--ks-blue)] relative"
+              aria-label="Wishlist"
+            >
+              <Heart size={18} />
+              {wishlist.length > 0 && (
+                <span
+                  className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[10px] text-white font-extrabold"
+                  style={{ background: '#E84040' }}
+                >
+                  {wishlist.length}
+                </span>
+              )}
+            </button>
+
+            {/* Cart */}
+            <button
+              onClick={() => setCartOpen(true)}
+              className="p-2 rounded-xl transition-all duration-300 hover:bg-[var(--ks-bg-secondary)] text-[var(--ks-text-secondary)] hover:text-[var(--ks-blue)] relative"
+              aria-label="Cart"
+            >
+              <ShoppingBag size={18} />
+              {cartItemCount > 0 && (
+                <span
+                  className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[10px] text-white font-extrabold"
+                  style={{ background: 'var(--ks-blue)' }}
+                >
+                  {cartItemCount}
+                </span>
+              )}
+            </button>
+
+            {/* User */}
+            <button
+              onClick={() => navigate('/admin')}
+              className="w-8 h-8 rounded-xl flex items-center justify-center transition-transform hover:scale-105 border border-[var(--ks-border)]"
+              style={{ background: 'var(--ks-bg-secondary)' }}
+              title={t('navbar.admin')}
+            >
+              <User size={15} style={{ color: 'var(--ks-text-secondary)' }} />
+            </button>
+          </div>
+        </div>
+
+        {/* Category mega-menu bar */}
+        <nav
+          ref={megaMenuRef}
+          className="border-t max-w-[1440px] mx-auto px-4 lg:px-8 hidden lg:flex items-center gap-2"
+          style={{ borderColor: 'var(--ks-border)' }}
+        >
+          {(['samsung', 'iphone'] as const).map((brand) => (
+            <div
+              key={brand}
+              className="relative"
+              onMouseEnter={() => setMegaMenu(brand)}
+              onMouseLeave={() => setMegaMenu(null)}
+            >
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMegaMenu(prev => prev === brand ? null : brand);
+                }}
+                className="flex items-center gap-1 px-4 py-3.5 text-sm font-semibold transition-all duration-300"
+                style={{
+                  color: megaMenu === brand ? 'var(--ks-blue)' : 'var(--ks-text-secondary)',
+                }}
+              >
+                <span>{brand === 'samsung' ? t('navbar.samsung') : t('navbar.iphone')}</span>
+                <ChevronDown size={13} className={`transition-transform duration-300 ${megaMenu === brand ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Mega Menu Dropdown with smooth cubic-bezier height/scale transition */}
+              <div
+                className={`absolute ${
+                  isRTL ? 'right-0' : 'left-0'
+                } top-full w-[540px] rounded-2xl shadow-2xl z-50 p-5 border border-[var(--ks-border)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                  megaMenu === brand ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto' : 'opacity-0 -translate-y-2 scale-95 pointer-events-none'
+                }`}
+                style={{ background: 'var(--ks-bg)' }}
+              >
+                <div className="grid grid-cols-3 gap-2">
+                  {(brand === 'samsung' ? samsungModels : iphoneModels).map((model) => {
+                    const modelSlug = model.toLowerCase().replace(/\+/g, '-plus').replace(/ /g, '-');
+                    return (
+                      <button
+                        key={model}
+                        onClick={() => {
+                          navigate(`/${brand}/${modelSlug}`);
+                          setMegaMenu(null);
+                        }}
+                        className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-300 hover:bg-[var(--ks-bg-secondary)] border border-[var(--ks-border)] hover:border-[var(--ks-blue)] group text-center"
+                      >
+                        <div
+                          className="w-10 h-10 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105"
+                          style={{ background: 'var(--ks-bg-tertiary)' }}
+                        >
+                          <Smartphone size={20} className="text-[var(--ks-blue)]" />
+                        </div>
+                        <span className="text-xs font-bold" style={{ color: 'var(--ks-text)' }}>
+                          {model}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={() => {
+                    navigate(`/${brand}`);
+                    setMegaMenu(null);
+                  }}
+                  className="mt-4 text-xs font-bold text-[var(--ks-blue)] hover:underline block"
+                >
+                  {t('navbar.allModels')}
+                </button>
+              </div>
+            </div>
+          ))}
+        </nav>
+      </header>
+
+      {/* Mobile Drawer (Slide-in) */}
+      <div
+        className={`fixed inset-0 z-50 transition-opacity duration-300 lg:hidden ${
+          mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+
+        {/* Panel with cubic-bezier slide transition */}
+        <div
+          className={`absolute top-0 bottom-0 w-80 max-w-[85vw] p-6 shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            isRTL
+              ? mobileMenuOpen ? 'translate-x-0 right-0' : 'translate-x-full right-0'
+              : mobileMenuOpen ? 'translate-x-0 left-0' : '-translate-x-full left-0'
+          }`}
+          style={{ background: 'var(--ks-bg)' }}
+          dir={isRTL ? 'rtl' : 'ltr'}
+        >
+          <div className="flex items-center justify-between mb-8">
+            <span className="font-extrabold text-lg" style={{ color: 'var(--ks-text)' }}>
+              {t('navbar.title')}
+            </span>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-1 rounded-lg hover:bg-[var(--ks-bg-secondary)]"
+            >
+              <X size={20} style={{ color: 'var(--ks-text-secondary)' }} />
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <p className="text-xs font-extrabold text-[var(--ks-text-muted)] uppercase tracking-widest mb-3">
+                {t('footer.categories')}
+              </p>
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    navigate('/samsung');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-right py-2 font-semibold hover:text-[var(--ks-blue)] transition-colors block"
+                  style={{ color: 'var(--ks-text-secondary)', textAlign: isRTL ? 'right' : 'left' }}
+                >
+                  {t('navbar.samsung')}
+                </button>
+                <button
+                  onClick={() => {
+                    navigate('/iphone');
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-right py-2 font-semibold hover:text-[var(--ks-blue)] transition-colors block"
+                  style={{ color: 'var(--ks-text-secondary)', textAlign: isRTL ? 'right' : 'left' }}
+                >
+                  {t('navbar.iphone')}
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-[var(--ks-border)] space-y-4">
+              <button
+                onClick={() => {
+                  toggleLanguage();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-between py-2 text-sm font-semibold"
+                style={{ color: 'var(--ks-text-secondary)' }}
+              >
+                <span>{language === 'en' ? 'العربية' : 'English'}</span>
+                <Globe size={16} />
+              </button>
+
+              <button
+                onClick={() => {
+                  toggleDarkMode();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-between py-2 text-sm font-semibold"
+                style={{ color: 'var(--ks-text-secondary)' }}
+              >
+                <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+
+              <button
+                onClick={() => {
+                  navigate('/admin');
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-between py-2 text-sm font-semibold"
+                style={{ color: 'var(--ks-text-secondary)' }}
+              >
+                <span>{t('navbar.admin')}</span>
+                <User size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
