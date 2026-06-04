@@ -65,7 +65,7 @@ export function ProductCard({ product, view = 'grid' }: ProductCardProps) {
           direction: isRTL ? 'rtl' : 'ltr',
         }}
       >
-        <div className="relative w-40 h-40 shrink-0 rounded-2xl overflow-hidden bg-[var(--ks-bg-secondary)] border border-[var(--ks-border)]">
+        <div className="relative w-28 sm:w-40 h-28 sm:h-40 shrink-0 rounded-2xl overflow-hidden bg-[var(--ks-bg-secondary)] border border-[var(--ks-border)]">
           <img src={image} alt={name} className="w-full h-full object-cover" />
           {product.isFeatured && (
             <span
@@ -120,7 +120,7 @@ export function ProductCard({ product, view = 'grid' }: ProductCardProps) {
             </div>
             <button
               onClick={handleAddToCart}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all min-h-[44px] min-w-[44px] justify-center hover:opacity-90 active:scale-95"
+              className="flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2.5 rounded-xl text-xs font-bold text-white transition-all min-h-[44px] min-w-[44px] justify-center hover:opacity-90 active:scale-95"
               style={{
                 background: addState === 'done' ? '#22c55e' : 'var(--ks-blue)',
               }}

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect, Rea
 import { io, Socket } from 'socket.io-client';
 import en from '../../locales/en.json';
 import ar from '../../locales/ar.json';
+import { useProductStore } from '../../store/useProductStore';
 
 const translations: Record<string, any> = { en, ar };
 
@@ -66,7 +67,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   });
 
   // Real-time Database States
-  const [products, setProducts] = useState<any[]>([]);
+  const products = useProductStore(state => state.products);
+  const setProducts = useProductStore(state => state.setProducts);
+  const fetchProducts = useProductStore(state => state.fetchProducts);
   const [settings, setSettings] = useState<any>(null);
 
   // Selected Country for localized pricing
@@ -108,7 +111,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Connect to Socket.IO Namespace
   useEffect(() => {
-    const socketUrl = 'http://localhost:5000';
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
     const newSocket = io(socketUrl, {
       path: '/ws',
       reconnection: true,
@@ -129,48 +132,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Fetch initial catalog data from Express REST API
   useEffect(() => {
-    fetch('http://localhost:5000/api/products?limit=100')
-      .then(res => res.json())
-      .then(data => {
-        setProducts(data.products || []);
-      })
-      .catch(err => console.error('Failed to load products from API:', err));
+    fetchProducts();
 
-    fetch('http://localhost:5000/api/settings')
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    fetch(`${apiBaseUrl}/settings`)
       .then(res => res.json())
       .then(data => {
         setSettings(data);
       })
       .catch(err => console.error('Failed to load settings from API:', err));
-  }, []);
+  }, [fetchProducts]);
 
   // Socket.IO event registrations for real-time synchronization
   useEffect(() => {
     if (!socket) return;
-
-    socket.on('product:created', (newProduct: any) => {
-      setProducts(prev => {
-        if (prev.find(p => p._id === newProduct._id)) return prev;
-        return [newProduct, ...prev];
-      });
-    });
-
-    socket.on('product:updated', (updatedProduct: any) => {
-      setProducts(prev => prev.map(p => (p._id === updatedProduct._id ? updatedProduct : p)));
-    });
-
-    socket.on('product:deleted', (data: { id: string }) => {
-      setProducts(prev => prev.filter(p => p._id !== data.id));
-    });
 
     socket.on('settings:updated', (updatedSettings: any) => {
       setSettings(updatedSettings);
     });
 
     return () => {
-      socket.off('product:created');
-      socket.off('product:updated');
-      socket.off('product:deleted');
       socket.off('settings:updated');
     };
   }, [socket]);

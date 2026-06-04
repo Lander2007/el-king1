@@ -3,7 +3,10 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
+import bcrypt from 'bcryptjs';
 import { connectDB } from './lib/mongodb';
+import { Admin } from './models/Admin';
 
 // Load routers
 import authRouter from './routes/auth';
@@ -28,6 +31,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use(cookieParser());
 
 // Socket.IO Setup
 const io = new Server(httpServer, {
@@ -37,6 +41,8 @@ const io = new Server(httpServer, {
   },
   path: '/ws', // Custom namespace path
 });
+
+app.set('io', io);
 
 // Create namespace /ws
 const wsNamespace = io.of('/ws');
@@ -72,8 +78,28 @@ const PORT = process.env.PORT || 5000;
 async function startServer() {
   await connectDB();
   
+  // Seed default admin user if not exists
+  try {
+    const adminCount = await Admin.countDocuments();
+    if (adminCount === 0) {
+      const hashedPassword = await bcrypt.hash('Admin@2025', 10);
+      await Admin.create({
+        username: 'admin',
+        passwordHash: hashedPassword,
+      });
+      console.log('Seeded default admin credentials (admin / Admin@2025)');
+    }
+  } catch (err) {
+    console.error('Failed to seed default admin user:', err);
+  }
+
   // Start Change Streams with WS namespace
   initChangeStreams(wsNamespace);
+
+  // Global 404 handler to return JSON instead of HTML
+  app.use((req, res) => {
+    res.status(404).json({ message: `Route not found: ${req.method} ${req.originalUrl}` });
+  });
 
   httpServer.listen(PORT, () => {
     console.log(`Backend server running on port ${PORT}`);

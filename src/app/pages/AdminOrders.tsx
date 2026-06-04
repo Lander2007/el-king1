@@ -43,28 +43,9 @@ function getStepsDone(order: any): number {
   return steps;
 }
 
-// Helper function to handle authenticated fetches (and automatically log in as admin if no token exists)
+// Helper function to handle authenticated fetches using the stored admin token
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-  let token = localStorage.getItem('adminToken');
-  if (!token) {
-    try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'admin@kingstore.com', password: 'admin123' }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        token = data.token;
-        if (token) {
-          localStorage.setItem('adminToken', token);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to log in admin automatically:', err);
-    }
-  }
-
+  const token = localStorage.getItem('admin_token');
   const headers: HeadersInit = {
     ...options.headers,
     'Authorization': `Bearer ${token}`,
@@ -114,7 +95,7 @@ export function AdminOrders() {
 
     const handleOrderUpdated = (updatedOrder: any) => {
       setOrdersList(prev => prev.map(o => (o._id === updatedOrder._id ? updatedOrder : o)));
-      setSelectedOrder(prev => {
+      setSelectedOrder((prev: any) => {
         if (prev && prev._id === updatedOrder._id) {
           return updatedOrder;
         }
@@ -192,9 +173,9 @@ export function AdminOrders() {
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
           <div
-            className="flex items-center gap-2 px-3 rounded-xl flex-1 max-w-xs"
+            className="flex items-center gap-2 px-3 rounded-xl flex-1 max-w-full sm:max-w-xs"
             style={{ background: 'var(--ks-bg)', border: '1px solid var(--ks-border)' }}
           >
             <Search size={15} style={{ color: 'var(--ks-text-muted)' }} />

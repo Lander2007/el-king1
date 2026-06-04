@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import { Settings } from '../models/Settings';
-import { adminMiddleware, AuthRequest } from '../middleware/auth';
+import { verifyToken } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -18,7 +18,7 @@ router.get('/settings', async (req: any, res: Response) => {
 });
 
 // PUT /api/admin/settings (Update settings - Admin only)
-router.put('/admin/settings', adminMiddleware, async (req: AuthRequest, res: Response) => {
+router.put('/admin/settings', verifyToken, async (req: any, res: Response) => {
   try {
     let settings = await Settings.findOne();
     if (!settings) {

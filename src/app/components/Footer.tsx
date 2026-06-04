@@ -32,14 +32,12 @@ const QUICK_LINKS = {
     { label: 'Samsung Accessories', path: '/samsung' },
     { label: 'iPhone Accessories', path: '/iphone' },
     { label: 'New Arrivals', path: '/samsung?sort=newest' },
-    { label: 'Admin Dashboard', path: '/admin' },
   ],
   ar: [
     { label: 'الرئيسية', path: '/' },
     { label: 'اكسسوارات سامسونج', path: '/samsung' },
     { label: 'اكسسوارات آيفون', path: '/iphone' },
     { label: 'وصل حديثاً', path: '/samsung?sort=newest' },
-    { label: 'لوحة التحكم', path: '/admin' },
   ],
 };
 

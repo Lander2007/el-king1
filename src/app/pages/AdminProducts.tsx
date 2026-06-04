@@ -21,28 +21,9 @@ const DEFAULT_FORM: ProductFormState = {
   price: '', stock: '', status: 'Active', description: '', descriptionAr: '',
 };
 
-// Helper function to handle authenticated fetches (and automatically log in as admin if no token exists)
+// Helper function to handle authenticated fetches using the stored admin token
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-  let token = localStorage.getItem('adminToken');
-  if (!token) {
-    try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'admin@kingstore.com', password: 'admin123' }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        token = data.token;
-        if (token) {
-          localStorage.setItem('adminToken', token);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to log in admin automatically:', err);
-    }
-  }
-
+  const token = localStorage.getItem('admin_token');
   const headers: HeadersInit = {
     ...options.headers,
     'Authorization': `Bearer ${token}`,
@@ -310,7 +291,7 @@ export function AdminProducts() {
 
       <main className="flex-1 overflow-y-auto p-8">
         {/* Toolbar */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl" style={{ color: 'var(--ks-text)', fontWeight: 800 }}>
               {language === 'ar' ? 'المنتجات' : 'Products'}
@@ -319,7 +300,7 @@ export function AdminProducts() {
               {productList.length} {language === 'ar' ? 'منتج' : 'total products'}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             <div
               className="flex items-center gap-2 px-3 rounded-xl"
               style={{ background: 'var(--ks-bg)', border: '1px solid var(--ks-border)' }}
@@ -331,7 +312,7 @@ export function AdminProducts() {
                 onChange={e => setSearch(e.target.value)}
                 placeholder={language === 'ar' ? 'بحث عن منتج...' : 'Search products...'}
                 className="bg-transparent outline-none text-sm py-2.5"
-                style={{ color: 'var(--ks-text)', width: '200px' }}
+                style={{ color: 'var(--ks-text)', width: '100%', minWidth: '200px' }}
               />
             </div>
             <button

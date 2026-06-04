@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { ChevronRight, Truck, Shield, Award, RotateCcw, ArrowRight } from 'lucide-react';
+import { ChevronRight, Truck, Shield, Award, RotateCcw, ArrowRight, Smartphone } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ProductCard } from '../components/ProductCard';
+import { HeroSection } from '../components/HeroSection';
 
 // Headline typewriter animations
 function Typewriter({ words }: { words: string[] }) {
@@ -97,66 +98,18 @@ export function HomePage() {
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} className="bg-[var(--ks-bg)] min-h-screen">
       {/* Hero Section with premium mesh gradient */}
-      <section className="relative overflow-hidden min-h-[580px] flex items-center">
-        <div 
-          className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-30" 
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1678911820864-e2c567c655d7?w=1200')" }}
-        />
-        <div 
-          className="absolute inset-0 bg-gradient-to-tr from-[#0a0f2c] via-[#101950] to-[#1e2a78] opacity-95"
-        />
-        <div className="absolute inset-0 pointer-events-none opacity-20">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-[var(--ks-blue)] blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[var(--ks-gold)] blur-3xl animate-pulse" />
-        </div>
-
-        <div className="relative max-w-[1440px] mx-auto px-4 lg:px-8 py-20 w-full">
-          <div className="max-w-2xl">
-            <span
-              className="inline-block px-3.5 py-1.5 rounded-full text-xs font-bold mb-5 shadow-sm"
-              style={{ background: 'rgba(59,111,232,0.15)', border: '1px solid rgba(59,111,232,0.3)', color: '#7AAFFF' }}
-            >
-              {t('hero.tag')}
-            </span>
-            <h1 className="mb-6 text-white text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight min-h-[120px] sm:min-h-[auto]">
-              <Typewriter words={typewriterWords} />
-            </h1>
-            <p className="mb-10 text-base sm:text-lg leading-relaxed text-slate-300 font-medium">{t('hero.subtitle')}</p>
-            <div className="flex items-center gap-4 flex-wrap">
-              <button
-                onClick={() => navigate('/samsung')}
-                className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-white font-bold transition-all duration-300 hover:shadow-lg hover:scale-105"
-                style={{ background: 'var(--ks-blue)' }}
-              >
-                {t('hero.shopSamsung')}
-                <ChevronRight size={18} className={`transition-transform duration-300 ${isRTL ? 'rotate-185 hover:-translate-x-1' : 'hover:translate-x-1'}`} />
-              </button>
-              <button
-                onClick={() => navigate('/iphone')}
-                className="flex items-center gap-2 px-8 py-3.5 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105 text-white"
-                style={{
-                  background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid rgba(255,255,255,0.18)',
-                  backdropFilter: 'blur(12px)',
-                }}
-              >
-                {t('hero.shopIphone')}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* Animated Counter Stats Section */}
       <section className="relative -mt-10 z-10 max-w-[1440px] mx-auto px-4 lg:px-8">
-        <div className="grid grid-cols-3 gap-4 p-6 sm:p-8 rounded-3xl shadow-xl border border-[var(--ks-border)]" style={{ background: 'var(--ks-bg)' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 p-6 sm:p-8 rounded-3xl shadow-xl border border-[var(--ks-border)]" style={{ background: 'var(--ks-bg)' }}>
           <div className="text-center">
             <h3 className="text-xl sm:text-3xl font-black text-[var(--ks-blue)]">
               <AnimatedCounter end={56} suffix="+" />
             </h3>
             <p className="text-xs sm:text-sm font-semibold text-[var(--ks-text-secondary)] mt-1">{t('admin.activeProducts')}</p>
           </div>
-          <div className="text-center border-x border-[var(--ks-border)]">
+          <div className="text-center sm:border-x border-y sm:border-y-0 py-4 sm:py-0 border-[var(--ks-border)]">
             <h3 className="text-xl sm:text-3xl font-black text-[var(--ks-blue)]">
               <AnimatedCounter end={1280} suffix="+" />
             </h3>
@@ -258,7 +211,7 @@ export function HomePage() {
             {language === 'ar' ? 'المنتجات المميزة' : 'Featured Products'}
             <span className="block mt-2 w-16 h-1 rounded-full" style={{ background: 'var(--ks-blue)' }} />
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {featured.map((p) => (
               <ProductCard key={p._id} product={p} />
             ))}
@@ -281,7 +234,7 @@ export function HomePage() {
               {t('products.viewAllProducts')} <ChevronRight size={16} className={isRTL ? 'rotate-180' : ''} />
             </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {newArrivals.map((p) => (
               <ProductCard key={p._id} product={p} />
             ))}
@@ -295,7 +248,7 @@ export function HomePage() {
           <h2 className="text-3xl font-extrabold mb-12 text-center" style={{ color: 'var(--ks-text)' }}>
             {t('products.why')}
           </h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <TrustBadge icon={Truck} title={t('products.trust1Title')} desc={t('products.trust1Desc')} />
             <TrustBadge icon={Shield} title={t('products.trust2Title')} desc={t('products.trust2Desc')} />
             <TrustBadge icon={Award} title={t('products.trust3Title')} desc={t('products.trust3Desc')} />

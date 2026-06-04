@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import { Message } from '../models/Message';
-import { adminMiddleware, AuthRequest } from '../middleware/auth';
+import { verifyToken } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -31,7 +31,7 @@ router.post('/contact', async (req: any, res: Response) => {
 });
 
 // GET /api/admin/messages (View messages - Admin only)
-router.get('/admin/messages', adminMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/admin/messages', verifyToken, async (req: any, res: Response) => {
   try {
     const messages = await Message.find().sort({ createdAt: -1 });
     res.json(messages);

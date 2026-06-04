@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
+import mongoose from 'mongoose';
 import { Product } from '../models/Product';
-import { adminMiddleware } from '../middleware/auth';
+import { verifyToken } from '../middleware/authMiddleware';
 
 const router = Router();
 
@@ -57,6 +58,32 @@ router.get('/', async (req: any, res: Response) => {
   }
 });
 
+// GET /api/products/search (Search across: name, description, category fields)
+router.get('/search', async (req: any, res: Response) => {
+  const { q } = req.query;
+  if (!q) {
+    return res.json([]);
+  }
+
+  try {
+    const results = await Product.find({
+      isActive: true,
+      $or: [
+        { 'name.en': { $regex: q as string, $options: 'i' } },
+        { 'name.ar': { $regex: q as string, $options: 'i' } },
+        { 'description.en': { $regex: q as string, $options: 'i' } },
+        { 'description.ar': { $regex: q as string, $options: 'i' } },
+        { category: { $regex: q as string, $options: 'i' } },
+        { brand: { $regex: q as string, $options: 'i' } },
+        { model: { $regex: q as string, $options: 'i' } },
+      ]
+    });
+    res.json(results);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // GET /api/products/category/:cat (by category/brand)
 router.get('/category/:cat', async (req: any, res: Response) => {
   try {
@@ -70,10 +97,19 @@ router.get('/category/:cat', async (req: any, res: Response) => {
   }
 });
 
-// GET /api/products/:slug (single by slug)
-router.get('/:slug', async (req: any, res: Response) => {
+// GET /api/products/:idOrSlug (single by ID or slug)
+router.get('/:idOrSlug', async (req: any, res: Response) => {
   try {
-    const product = await Product.findOne({ slug: req.params.slug });
+    const { idOrSlug } = req.params;
+    let product;
+
+    if (mongoose.Types.ObjectId.isValid(idOrSlug)) {
+      product = await Product.findById(idOrSlug);
+    }
+    if (!product) {
+      product = await Product.findOne({ slug: idOrSlug });
+    }
+
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -84,7 +120,7 @@ router.get('/:slug', async (req: any, res: Response) => {
 });
 
 // POST /api/products (admin only)
-router.post('/', adminMiddleware, async (req: any, res: Response) => {
+router.post('/', verifyToken, async (req: any, res: Response) => {
   try {
     const product = await Product.create(req.body);
 
@@ -92,6 +128,12 @@ router.post('/', adminMiddleware, async (req: any, res: Response) => {
     const wsNamespace = req.app.get('wsNamespace');
     if (wsNamespace) {
       wsNamespace.emit('product:created', product);
+      wsNamespace.emit('product:added', product);
+    }
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('product:created', product);
+      io.emit('product:added', product);
     }
 
     res.status(201).json(product);
@@ -99,9 +141,8 @@ router.post('/', adminMiddleware, async (req: any, res: Response) => {
     res.status(400).json({ message: error.message });
   }
 });
-
 // PUT /api/products/:id (admin only)
-router.put('/:id', adminMiddleware, async (req: any, res: Response) => {
+router.put('/:id', verifyToken, async (req: any, res: Response) => {
   try {
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -119,6 +160,10 @@ router.put('/:id', adminMiddleware, async (req: any, res: Response) => {
         wsNamespace.emit('inventory:low', { productId: product._id, stock: product.stock, name: product.name });
       }
     }
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('product:updated', product);
+    }
 
     res.json(product);
   } catch (error: any) {
@@ -127,7 +172,7 @@ router.put('/:id', adminMiddleware, async (req: any, res: Response) => {
 });
 
 // DELETE /api/products/:id (admin only - soft delete)
-router.delete('/:id', adminMiddleware, async (req: any, res: Response) => {
+router.delete('/:id', verifyToken, async (req: any, res: Response) => {
   try {
     const product = await Product.findByIdAndUpdate(
       req.params.id,
@@ -142,6 +187,10 @@ router.delete('/:id', adminMiddleware, async (req: any, res: Response) => {
     const wsNamespace = req.app.get('wsNamespace');
     if (wsNamespace) {
       wsNamespace.emit('product:deleted', { id: product._id });
+    }
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('product:deleted', { id: product._id });
     }
 
     res.json({ message: 'Product deactivated successfully', product });

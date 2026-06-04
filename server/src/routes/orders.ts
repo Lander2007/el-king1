@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import { Order } from '../models/Order';
 import { Product } from '../models/Product';
 import { Settings } from '../models/Settings';
-import { adminMiddleware, AuthRequest } from '../middleware/auth';
+import { verifyToken } from '../middleware/authMiddleware';
 import { serverOrderSchema } from '../lib/validations/order';
 
 const router = Router();
@@ -130,7 +130,7 @@ router.get('/orders/:id', async (req: any, res: Response) => {
 });
 
 // GET /api/admin/orders (Admin list all)
-router.get('/admin/orders', adminMiddleware, async (req: AuthRequest, res: Response) => {
+router.get('/admin/orders', verifyToken, async (req: any, res: Response) => {
   try {
     const orders = await Order.find().populate('items.product').sort({ createdAt: -1 });
     res.json(orders);
@@ -140,7 +140,7 @@ router.get('/admin/orders', adminMiddleware, async (req: AuthRequest, res: Respo
 });
 
 // PUT /api/admin/orders/:id (Admin update status)
-router.put('/admin/orders/:id', adminMiddleware, async (req: AuthRequest, res: Response) => {
+router.put('/admin/orders/:id', verifyToken, async (req: any, res: Response) => {
   const { orderStatus, paymentStatus } = req.body;
 
   try {

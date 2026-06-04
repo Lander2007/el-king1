@@ -17,10 +17,11 @@ import { AdminProducts } from './pages/AdminProducts';
 import { AdminOrders } from './pages/AdminOrders';
 import { WishlistPage } from './pages/WishlistPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { AdminGuard } from './components/AdminGuard';
 
 function StorefrontLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'var(--ks-bg)' }}>
+    <div className="min-h-screen flex flex-col overflow-x-hidden" style={{ background: 'var(--ks-bg)' }}>
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />
@@ -108,10 +109,10 @@ export default function App() {
           } />
 
           {/* Admin routes (no storefront layout) */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/products" element={<AdminProducts />} />
-          <Route path="/admin/orders" element={<AdminOrders />} />
-          <Route path="/admin/*" element={<AdminDashboard />} />
+          <Route path="/admin" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
+          <Route path="/admin/products" element={<AdminGuard><AdminProducts /></AdminGuard>} />
+          <Route path="/admin/orders" element={<AdminGuard><AdminOrders /></AdminGuard>} />
+          <Route path="/admin/*" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
 
           {/* Fallback */}
           <Route path="*" element={

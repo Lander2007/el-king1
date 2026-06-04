@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import {
-  Search, Sun, Moon, Globe, Heart, ShoppingBag,
-  User, ChevronDown, X, Clock, Smartphone, Menu, Loader2
+  Sun, Moon, Globe, Heart, ShoppingBag,
+  ChevronDown, Clock, Smartphone, Menu, X
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { SearchBar } from './SearchBar';
 
 const CASE_IMG = 'https://images.unsplash.com/photo-1593830566460-2464575a9a24?w=600';
 
@@ -16,25 +17,16 @@ export function Navbar() {
     t, products, settings, selectedCountry, setSelectedCountry, getCurrencySymbol
   } = useApp();
 
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [query, setQuery] = useState('');
-  const [liveResults, setLiveResults] = useState<any[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [focusedIndex, setFocusedIndex] = useState(-1);
   const [megaMenu, setMegaMenu] = useState<null | 'samsung' | 'iphone'>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const searchRef = useRef<HTMLDivElement>(null);
   const megaMenuRef = useRef<HTMLNavElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Close search and mega menu dropdowns on click outside
+  // Close mega menu dropdown on click outside
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setSearchFocused(false);
-      }
       if (megaMenuRef.current && !megaMenuRef.current.contains(e.target as Node)) {
         setMegaMenu(null);
       }
@@ -43,61 +35,7 @@ export function Navbar() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  // Debounced live search
-  useEffect(() => {
-    if (query.trim().length <= 1) {
-      setLiveResults([]);
-      setFocusedIndex(-1);
-      return;
-    }
 
-    setSearchLoading(true);
-    const handler = setTimeout(() => {
-      fetch(`http://localhost:5000/api/products?q=${encodeURIComponent(query)}&limit=5`)
-        .then((res) => res.json())
-        .then((data) => {
-          setLiveResults(data.products || []);
-          setSearchLoading(false);
-        })
-        .catch((err) => {
-          console.error(err);
-          setSearchLoading(false);
-        });
-    }, 300);
-
-    return () => clearTimeout(handler);
-  }, [query]);
-
-  // Keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setFocusedIndex((prev) => (prev < liveResults.length - 1 ? prev + 1 : 0));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setFocusedIndex((prev) => (prev > 0 ? prev - 1 : liveResults.length - 1));
-    } else if (e.key === 'Enter') {
-      if (focusedIndex >= 0 && liveResults[focusedIndex]) {
-        navigate(`/product/${liveResults[focusedIndex]._id}`);
-        setSearchFocused(false);
-        setQuery('');
-      } else if (query.trim()) {
-        navigate(`/search?q=${encodeURIComponent(query)}`);
-        setSearchFocused(false);
-        setQuery('');
-      }
-    } else if (e.key === 'Escape') {
-      setSearchFocused(false);
-    }
-  };
-
-  const handleSearchSubmit = () => {
-    if (query.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query)}`);
-      setSearchFocused(false);
-      setQuery('');
-    }
-  };
 
   // Static list for categories/brands
   const samsungModels = products
@@ -114,13 +52,7 @@ export function Navbar() {
 
   return (
     <>
-      {/* Search Backdrop with smooth opacity fade */}
-      <div
-        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300 ${
-          searchFocused ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={() => setSearchFocused(false)}
-      />
+
 
       <header
         className="sticky top-0 z-50 w-full backdrop-blur-md transition-colors duration-300"
@@ -131,7 +63,7 @@ export function Navbar() {
         }}
         dir={isRTL ? 'rtl' : 'ltr'}
       >
-        <div className="max-w-[1440px] mx-auto px-4 lg:px-8 h-16 flex items-center justify-between gap-4">
+        <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-3 lg:py-0 min-h-[4rem] flex flex-wrap lg:flex-nowrap items-center justify-between gap-x-2 gap-y-3">
           
           {/* Mobile hamburger menu */}
           <button
@@ -155,117 +87,13 @@ export function Navbar() {
               <span className="font-extrabold text-white text-lg">K</span>
             </div>
             <span className="font-extrabold tracking-tight text-xl hidden sm:inline-block" style={{ color: 'var(--ks-text)' }}>
-              {settings?.siteName[language] || t('navbar.title')}
+              {settings?.siteName?.[language] || t('navbar.title')}
             </span>
           </button>
 
           {/* Search bar */}
-          <div ref={searchRef} className="flex-1 max-w-xl mx-auto relative z-50">
-            <div
-              className="flex items-center rounded-2xl px-4 gap-3 transition-all duration-300"
-              style={{
-                background: searchFocused ? 'var(--ks-bg)' : 'var(--ks-bg-secondary)',
-                border: searchFocused ? '2px solid var(--ks-blue)' : '2px solid transparent',
-                height: '44px',
-                boxShadow: searchFocused ? 'var(--ks-shadow-md)' : 'none',
-              }}
-            >
-              <Search size={18} className="text-[var(--ks-text-muted)] shrink-0" />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onKeyDown={handleKeyDown}
-                placeholder={t('navbar.search')}
-                className="flex-1 bg-transparent outline-none text-sm font-medium w-full"
-                style={{ color: 'var(--ks-text)', direction: /[\u0600-\u06FF]/.test(query) ? 'rtl' : 'ltr' }}
-                aria-label="Search"
-                aria-expanded={searchFocused}
-              />
-              {searchLoading && (
-                <Loader2 size={16} className="animate-spin text-[var(--ks-blue)] shrink-0" />
-              )}
-              {query && !searchLoading && (
-                <button
-                  onClick={() => {
-                    setQuery('');
-                    setLiveResults([]);
-                  }}
-                  className="p-1 rounded-full hover:bg-[var(--ks-bg-secondary)]"
-                >
-                  <X size={14} className="text-[var(--ks-text-secondary)]" />
-                </button>
-              )}
-            </div>
-
-            {/* Live Search Results Dropdown */}
-            {searchFocused && (
-              <div
-                className="absolute top-full mt-3 w-full rounded-2xl overflow-hidden shadow-2xl z-50 border border-[var(--ks-border)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
-                style={{ background: 'var(--ks-bg)' }}
-              >
-                {liveResults.length > 0 ? (
-                  <div className="p-2 space-y-1">
-                    {liveResults.map((p, idx) => {
-                      const nameEn = p.name?.en || p.name || '';
-                      const nameAr = p.name?.ar || '';
-                      const primaryName = language === 'ar' ? (nameAr || nameEn) : nameEn;
-                      const secondaryName = language === 'ar' ? nameEn : nameAr;
-                      return (
-                        <button
-                          key={p._id}
-                          onClick={() => {
-                            navigate(`/product/${p._id}`);
-                            setSearchFocused(false);
-                            setQuery('');
-                          }}
-                          className={`w-full flex items-center gap-3 p-2 rounded-xl transition-colors text-left ${
-                            idx === focusedIndex ? 'bg-[var(--ks-bg-tertiary)]' : 'hover:bg-[var(--ks-bg-secondary)]'
-                          } ${isRTL ? 'text-right' : 'text-left'}`}
-                          style={{ direction: isRTL ? 'rtl' : 'ltr' }}
-                        >
-                          <img
-                            src={p.images?.[0]?.url || p.image || CASE_IMG}
-                            alt={primaryName}
-                            className="w-10 h-10 rounded-lg object-cover border border-[var(--ks-border)]"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold truncate" style={{ color: 'var(--ks-text)' }}>
-                              {primaryName} {secondaryName && <span className="text-xs text-[var(--ks-text-muted)] font-normal">({secondaryName})</span>}
-                            </p>
-                            <p className="text-xs text-[var(--ks-text-muted)] truncate capitalize">
-                              {p.brand} - {p.model}
-                            </p>
-                          </div>
-                          <span className="text-sm font-bold shrink-0" style={{ color: 'var(--ks-blue)' }}>
-                            {(p.pricing?.[selectedCountry] || p.pricing?.default || p.price || 0).toLocaleString()} EGP
-                          </span>
-                        </button>
-                      );
-                    })}
-                    <div className="p-2 border-t border-[var(--ks-border)] bg-[var(--ks-bg-secondary)]">
-                      <button
-                        onClick={() => {
-                          navigate(`/search?q=${encodeURIComponent(query)}`);
-                          setSearchFocused(false);
-                          setQuery('');
-                        }}
-                        className="w-full text-center py-2 text-xs font-bold text-[var(--ks-blue)] hover:underline block"
-                      >
-                        {language === 'ar' ? `مشاهدة جميع النتائج لـ "${query}"` : `See all results for "${query}"`}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  query.trim().length > 1 && (
-                    <div className="p-4 text-center text-sm text-[var(--ks-text-muted)] font-medium">
-                      {t('navbar.noResults')}
-                    </div>
-                  )
-                )}
-              </div>
-            )}
+          <div className="order-last lg:order-none w-full lg:w-auto flex-1 mt-1 lg:mt-0">
+            <SearchBar />
           </div>
 
           {/* Right Action Icons */}
@@ -336,15 +164,7 @@ export function Navbar() {
               )}
             </button>
 
-            {/* User */}
-            <button
-              onClick={() => navigate('/admin')}
-              className="w-8 h-8 rounded-xl flex items-center justify-center transition-transform hover:scale-105 border border-[var(--ks-border)]"
-              style={{ background: 'var(--ks-bg-secondary)' }}
-              title={t('navbar.admin')}
-            >
-              <User size={15} style={{ color: 'var(--ks-text-secondary)' }} />
-            </button>
+
           </div>
         </div>
 
@@ -510,17 +330,7 @@ export function Navbar() {
                 {darkMode ? <Sun size={16} /> : <Moon size={16} />}
               </button>
 
-              <button
-                onClick={() => {
-                  navigate('/admin');
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center justify-between py-2 text-sm font-semibold"
-                style={{ color: 'var(--ks-text-secondary)' }}
-              >
-                <span>{t('navbar.admin')}</span>
-                <User size={16} />
-              </button>
+
             </div>
           </div>
         </div>

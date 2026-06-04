@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+.env
+.env.*
+.next/
+server/node_modules/
+server/dist/
+.DS_Store
