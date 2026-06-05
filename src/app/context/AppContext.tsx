@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import en from '../../locales/en.json';
 import ar from '../../locales/ar.json';
 import { useProductStore } from '../../store/useProductStore';
+import { API_URL, SOCKET_URL } from '../../config';
 
 const translations: Record<string, any> = { en, ar };
 
@@ -111,7 +112,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Connect to Socket.IO Namespace
   useEffect(() => {
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || '';
+    const socketUrl = SOCKET_URL;
     const newSocket = io(socketUrl, {
       path: '/ws',
       reconnection: true,
@@ -134,7 +135,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchProducts();
 
-    const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
+    const apiBaseUrl = API_URL;
     fetch(`${apiBaseUrl}/settings`)
       .then(res => res.json())
       .then(data => {

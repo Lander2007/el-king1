@@ -4,6 +4,7 @@ import { Search, Loader2, X, Smartphone, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 import { useApp } from '../context/AppContext';
 import { useProductStore } from '../../store/useProductStore';
+import { API_URL } from '../../config';
 
 export function SearchBar() {
   const { language, isRTL, t, selectedCountry } = useApp();
@@ -17,7 +18,6 @@ export function SearchBar() {
   const [focusedIndex, setFocusedIndex] = useState(-1);
 
   const searchRef = useRef<HTMLDivElement>(null);
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   // Close search dropdown on click outside
   useEffect(() => {

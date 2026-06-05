@@ -11,7 +11,7 @@ interface AuthState {
   verify: () => Promise<boolean>;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import { API_URL } from '../config';
 
 export const useAuthStore = create<AuthState>((set) => ({
   token: localStorage.getItem('admin_token'),

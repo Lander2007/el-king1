@@ -3,7 +3,7 @@ import { Search, X, Calendar, ChevronRight, Package, Truck, CheckCircle, CreditC
 import { useApp } from '../context/AppContext';
 import { AdminSidebar } from '../components/AdminSidebar';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import { API_URL } from '../../config';
 
 const statusColors: Record<string, { bg: string; text: string }> = {
   delivered: { bg: 'rgba(34,197,94,0.1)', text: '#22c55e' },

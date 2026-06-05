@@ -1,11 +1,9 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import { API_URL, SOCKET_URL } from '../config';
 
-const VITE_SOCKET_URL = import.meta.env.VITE_SOCKET_URL || '';
-const VITE_API_URL = import.meta.env.VITE_API_URL || '/api';
-
-const socket = io(VITE_SOCKET_URL, {
+const socket = io(SOCKET_URL, {
   path: '/ws',
   reconnection: true,
   reconnectionAttempts: Infinity,
@@ -79,7 +77,7 @@ export const useProductStore = create<ProductStore>((set) => {
     fetchProducts: async () => {
       set({ loading: true, error: null });
       try {
-        const response = await axios.get(`${VITE_API_URL}/products?limit=100`);
+        const response = await axios.get(`${API_URL}/products?limit=100`);
         set({ products: response.data.products || [], loading: false });
       } catch (err: any) {
         set({ error: err.message || 'Failed to fetch products', loading: false });

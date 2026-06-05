@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { Mail, Phone, MapPin, Send, Loader2, CheckCircle, Facebook, Instagram, Youtube } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import { API_URL } from '../../config';
 
 // ─── Social / Payment SVG Icons ────────────────────────────────────────────────
 const TikTokIcon = () => (

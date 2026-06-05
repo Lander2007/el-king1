@@ -25,17 +25,27 @@ const app = express();
 const httpServer = createServer(app);
 
 // Enable CORS
-const CORS_ORIGINS = [
-  'https://king-store.vercel.app',
-  'http://localhost:5173',
-];
+const CORS_ORIGINS = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',')
+  : ['https://king-store.vercel.app', 'http://localhost:5173'];
 
-app.use(
-  cors({
-    origin: CORS_ORIGINS,
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps, curl, or postman)
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = CORS_ORIGINS.some(allowedOrigin => allowedOrigin === '*' || allowedOrigin === origin);
+    
+    if (isAllowed || process.env.ALLOW_ALL_CORS === 'true' || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -43,10 +53,7 @@ app.use(cookieParser());
 
 // Socket.IO Setup
 const io = new Server(httpServer, {
-  cors: {
-    origin: CORS_ORIGINS,
-    credentials: true,
-  },
+  cors: corsOptions,
   path: '/ws', // Custom namespace path
 });
 

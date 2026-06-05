@@ -3,7 +3,7 @@ import { Search, Plus, Pencil, Trash2, X, Upload, AlertTriangle, ToggleLeft, Tog
 import { useApp } from '../context/AppContext';
 import { AdminSidebar } from '../components/AdminSidebar';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import { API_URL } from '../../config';
 
 interface ProductFormState {
   name: string;

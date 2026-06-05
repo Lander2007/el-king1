@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { ChevronRight, ChevronLeft, Check, Loader2, Truck, Smartphone } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+import { API_URL } from '../../config';
 
 // ─── SVG Payment Icons ─────────────────────────────────────────────────────────
 const CodIcon = () => (

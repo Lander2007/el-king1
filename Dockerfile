@@ -16,9 +16,8 @@ RUN pnpm install --no-frozen-lockfile
 COPY . .
 
 # Set Vite environment variables for the build
-# This makes the frontend point to the same host for API and WebSocket
-ENV VITE_API_URL=/api
-ENV VITE_SOCKET_URL=/
+# Leave VITE_API_BASE_URL empty for relative path fallback when served by this container
+ENV VITE_API_BASE_URL=""
 
 # Build the frontend
 RUN pnpm run build
