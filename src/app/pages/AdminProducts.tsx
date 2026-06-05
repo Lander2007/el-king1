@@ -197,7 +197,10 @@ export function AdminProducts() {
     setIsSubmitting(true);
 
     try {
-      const slug = form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      // Build slug from EN name; fall back to brand+model+timestamp if name is non-Latin
+      const rawSlug = form.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      const slug = rawSlug || `${form.brand}-${form.model}-${Date.now()}`
+        .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
       const productPayload = {
         name: { en: form.name, ar: form.nameAr },
         slug,
