@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router';
 import { Mail, Phone, MapPin, Send, Loader2, CheckCircle, Facebook, Instagram, Youtube } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 // ─── Social / Payment SVG Icons ────────────────────────────────────────────────
 const TikTokIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width={16} height={16}>
@@ -62,7 +64,7 @@ export function Footer() {
     setSendError('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/contact', {
+      const res = await fetch(`${API_URL}/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

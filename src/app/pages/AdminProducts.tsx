@@ -3,6 +3,8 @@ import { Search, Plus, Pencil, Trash2, X, Upload, AlertTriangle, ToggleLeft, Tog
 import { useApp } from '../context/AppContext';
 import { AdminSidebar } from '../components/AdminSidebar';
 
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 interface ProductFormState {
   name: string;
   nameAr: string;
@@ -63,7 +65,7 @@ export function AdminProducts() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/products?limit=100&isActive=true');
+      const res = await fetch(`${API_URL}/products?limit=100&isActive=true`);
       if (res.ok) {
         const data = await res.json();
         setProductList(data.products || []);
@@ -228,11 +230,11 @@ export function AdminProducts() {
         }
       };
 
-      let url = 'http://localhost:5000/api/products';
+      let url = `${API_URL}/products`;
       let method = 'POST';
 
       if (editId) {
-        url = `http://localhost:5000/api/products/${editId}`;
+        url = `${API_URL}/products/${editId}`;
         method = 'PUT';
       }
 
@@ -260,7 +262,7 @@ export function AdminProducts() {
 
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetchWithAuth(`http://localhost:5000/api/products/${id}`, {
+      const res = await fetchWithAuth(`${API_URL}/products/${id}`, {
         method: 'DELETE',
       });
       if (!res.ok) {

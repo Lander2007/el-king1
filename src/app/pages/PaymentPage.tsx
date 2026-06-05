@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router';
 import { ChevronRight, ChevronLeft, Check, Loader2, Truck, Smartphone } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 // ─── SVG Payment Icons ─────────────────────────────────────────────────────────
 const CodIcon = () => (
   <svg viewBox="0 0 40 40" fill="none" width={36} height={36}>
@@ -145,7 +147,7 @@ export function PaymentPage() {
     };
 
     try {
-      const res = await fetch('http://localhost:5000/api/orders', {
+      const res = await fetch(`${API_URL}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderPayload),

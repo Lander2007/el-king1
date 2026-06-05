@@ -3,6 +3,8 @@ import { Search, X, Calendar, ChevronRight, Package, Truck, CheckCircle, CreditC
 import { useApp } from '../context/AppContext';
 import { AdminSidebar } from '../components/AdminSidebar';
 
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
 const statusColors: Record<string, { bg: string; text: string }> = {
   delivered: { bg: 'rgba(34,197,94,0.1)', text: '#22c55e' },
   shipped: { bg: 'rgba(59,111,232,0.1)', text: '#3B6FE8' },
@@ -66,7 +68,7 @@ export function AdminOrders() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const res = await fetchWithAuth('http://localhost:5000/api/admin/orders');
+      const res = await fetchWithAuth(`${API_URL}/admin/orders`);
       if (res.ok) {
         const data = await res.json();
         setOrdersList(data || []);
@@ -114,7 +116,7 @@ export function AdminOrders() {
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     try {
-      const res = await fetchWithAuth(`http://localhost:5000/api/admin/orders/${orderId}`, {
+      const res = await fetchWithAuth(`${API_URL}/admin/orders/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderStatus: newStatus }),
@@ -131,7 +133,7 @@ export function AdminOrders() {
 
   const handleUpdatePaymentStatus = async (orderId: string, newStatus: string) => {
     try {
-      const res = await fetchWithAuth(`http://localhost:5000/api/admin/orders/${orderId}`, {
+      const res = await fetchWithAuth(`${API_URL}/admin/orders/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paymentStatus: newStatus }),
