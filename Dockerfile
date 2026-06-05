@@ -25,7 +25,6 @@ RUN pnpm run build
 
 # Build the backend
 WORKDIR /app/server
-RUN pnpm install --no-frozen-lockfile
 RUN pnpm run build
 
 # ==========================================
