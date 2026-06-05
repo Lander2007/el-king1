@@ -80,7 +80,7 @@ const ProductSchema = new Schema<IProduct>(
 );
 
 // Indexes
-ProductSchema.index({ slug: 1 }, { unique: true });
+
 ProductSchema.index({ category: 1, isActive: 1 });
 ProductSchema.index({ 'name.en': 'text', 'name.ar': 'text', model: 'text' });
 

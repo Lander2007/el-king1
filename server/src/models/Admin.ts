@@ -15,6 +15,6 @@ const AdminSchema = new Schema<IAdmin>(
   { timestamps: true }
 );
 
-AdminSchema.index({ username: 1 }, { unique: true });
+
 
 export const Admin = model<IAdmin>('Admin', AdminSchema);

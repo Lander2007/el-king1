@@ -41,7 +41,7 @@ const UserSchema = new Schema<IUser>(
 );
 
 // Indexes
-UserSchema.index({ email: 1 }, { unique: true });
+
 if (process.env.NODE_ENV !== 'test') {
   UserSchema.index({ phone: 1 }, { sparse: true });
 }

@@ -89,7 +89,7 @@ const OrderSchema = new Schema<IOrder>(
 );
 
 // Indexes
-OrderSchema.index({ orderNumber: 1 }, { unique: true });
+
 OrderSchema.index({ 'customer.email': 1 });
 OrderSchema.index({ 'customer.phone': 1 });
 OrderSchema.index({ orderStatus: 1, createdAt: -1 });
