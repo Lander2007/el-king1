@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import axios from 'axios';
 import { io } from 'socket.io-client';
 
-const VITE_SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
-const VITE_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const VITE_SOCKET_URL = import.meta.env.VITE_SOCKET_URL || '';
+const VITE_API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const socket = io(VITE_SOCKET_URL, {
   path: '/ws',

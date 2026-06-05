@@ -111,7 +111,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Connect to Socket.IO Namespace
   useEffect(() => {
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || '';
     const newSocket = io(socketUrl, {
       path: '/ws',
       reconnection: true,
@@ -134,7 +134,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchProducts();
 
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
     fetch(`${apiBaseUrl}/settings`)
       .then(res => res.json())
       .then(data => {
