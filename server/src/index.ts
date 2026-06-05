@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import { connectDB } from './lib/mongodb';
 import { Admin } from './models/Admin';
+import { Settings } from './models/Settings';
 
 // Load routers
 import authRouter from './routes/auth';
@@ -36,7 +37,8 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
 // Socket.IO Setup
@@ -116,6 +118,41 @@ async function startServer() {
       }
     } catch (err) {
       console.error('⚠ Failed to seed default admin user:', err);
+    }
+
+    // Seed default settings if not exists
+    try {
+      const settingsCount = await Settings.countDocuments();
+      if (settingsCount === 0) {
+        await Settings.create({
+          siteName: { en: 'King Store', ar: 'كينج ستور' },
+          logo: '/logo.png',
+          contactEmail: 'contact@kingstore.com',
+          contactPhone: '+201000000000',
+          address: { en: 'Cairo, Egypt', ar: 'القاهرة، مصر' },
+          socialLinks: {
+            facebook: 'https://facebook.com',
+            instagram: 'https://instagram.com',
+            whatsapp: 'https://wa.me/201000000000'
+          },
+          paymentMethods: {
+            cod: true,
+            instapay: true,
+            vodafoneCash: true,
+            orangeCash: true,
+            etisalatCash: true
+          },
+          shippingRates: new Map([
+            ['Cairo', 50],
+            ['Giza', 50],
+            ['Alexandria', 60]
+          ]),
+          maintenanceMode: false
+        });
+        console.log('✓ Seeded default settings');
+      }
+    } catch (err) {
+      console.error('⚠ Failed to seed default settings:', err);
     }
 
     // Start Change Streams with WS namespace
