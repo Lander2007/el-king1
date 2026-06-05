@@ -10,7 +10,7 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY server/package.json ./server/
 
 # Install ALL dependencies (including devDependencies needed for build)
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 # Copy the rest of the application
 COPY . .
