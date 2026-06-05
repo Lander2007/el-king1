@@ -2,7 +2,6 @@
   "name": "elking-backend",
   "version": "1.0.0",
   "description": "E-Commerce backend using Express, Mongoose, and Socket.IO",
-  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx --watch src/index.ts",
