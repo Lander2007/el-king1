@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/wavedev_ecommerce';
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/wavedev_ecommerce';
 
 export async function connectDB() {
   if (mongoose.connection.readyState >= 1) {

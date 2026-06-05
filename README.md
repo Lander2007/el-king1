@@ -1,4 +1,11 @@
-
+---
+title: King Store Backend1
+emoji: 🛒
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+---
   # E-Commerce UI Design System
 
   This is a code bundle for E-Commerce UI Design System. The original project is available at https://www.figma.com/design/eB0rurruk3qCqYCNSAmejn/E-Commerce-UI-Design-System.
