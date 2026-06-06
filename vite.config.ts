@@ -56,7 +56,7 @@ export default defineConfig({
   build: {
     // Optimized build for production deployment
     target: 'ES2020',
-    minify: 'terser',
+    // minify uses esbuild by default (no need to specify)
     sourcemap: false, // Disable source maps in production for smaller bundle
     rollupOptions: {
       output: {
