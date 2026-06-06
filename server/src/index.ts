@@ -24,26 +24,107 @@ dotenv.config();
 const app = express();
 const httpServer = createServer(app);
 
-// Enable CORS
-const CORS_ORIGINS = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',')
-  : ['https://king-store.vercel.app', 'http://localhost:5173'];
+/**
+ * CORS Configuration
+ * 
+ * Supports multiple environment variables for flexible origin management:
+ * - VITE_APP_URL: Primary frontend URL (production Vercel domain)
+ * - CORS_ORIGIN: Comma-separated list of allowed origins
+ * 
+ * Examples of environment variables:
+ * Development:
+ *   VITE_APP_URL=http://localhost:3000
+ *   CORS_ORIGIN=http://localhost:3000,http://localhost:5173
+ * 
+ * Production (Hugging Face Spaces + Vercel):
+ *   VITE_APP_URL=https://yourapp.vercel.app
+ *   CORS_ORIGIN=https://yourapp.vercel.app,https://*.vercel.app
+ * 
+ * Note: 
+ * - Always allows requests WITHOUT an origin header (UptimeRobot, monitoring pings, curl, Postman)
+ * - Supports wildcard patterns (*.vercel.app)
+ * - Enables credentials for session/cookie-based auth
+ */
 
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // Allow requests with no origin (like mobile apps, curl, or postman)
-    if (!origin) return callback(null, true);
-    
-    const isAllowed = CORS_ORIGINS.some(allowedOrigin => allowedOrigin === '*' || allowedOrigin === origin);
-    
-    if (isAllowed || process.env.ALLOW_ALL_CORS === 'true' || process.env.NODE_ENV !== 'production') {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+const buildAllowedOrigins = (): string[] => {
+  const origins: Set<string> = new Set();
+
+  // Add VITE_APP_URL if provided
+  if (process.env.VITE_APP_URL) {
+    origins.add(process.env.VITE_APP_URL);
+  }
+
+  // Add CORS_ORIGIN entries if provided
+  if (process.env.CORS_ORIGIN) {
+    process.env.CORS_ORIGIN.split(',').forEach(o => origins.add(o.trim()));
+  }
+
+  // Development defaults if no env variables set
+  if (origins.size === 0) {
+    origins.add('http://localhost:3000');
+    origins.add('http://localhost:5173');
+    origins.add('http://127.0.0.1:3000');
+    origins.add('http://127.0.0.1:5173');
+  }
+
+  return Array.from(origins);
+};
+
+const ALLOWED_ORIGINS = buildAllowedOrigins();
+
+// Helper function to check if origin matches allowed patterns
+const isOriginAllowed = (origin: string): boolean => {
+  return ALLOWED_ORIGINS.some(allowedOrigin => {
+    // Exact match
+    if (allowedOrigin === origin) return true;
+
+    // Wildcard pattern matching (e.g., https://*.vercel.app matches https://app.vercel.app)
+    if (allowedOrigin.includes('*')) {
+      const pattern = allowedOrigin
+        .replace(/\./g, '\\.')
+        .replace(/\*/g, '[^/]+');
+      const regex = new RegExp(`^${pattern}$`);
+      return regex.test(origin);
     }
+
+    return false;
+  });
+};
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // CRITICAL: Always allow requests without origin
+    // These are legitimate requests from:
+    // - UptimeRobot and other monitoring services
+    // - curl and other CLI tools
+    // - same-origin requests (browser doesn't send Origin header)
+    // - mobile apps
+    // - server-to-server requests
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // Check if origin is allowed
+    if (isOriginAllowed(origin)) {
+      return callback(null, true);
+    }
+
+    // Origin not allowed - reject with CORS error
+    // This is logged but doesn't throw - the request is simply blocked
+    console.warn(`CORS: Rejected request from origin "${origin}"`);
+    return callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  maxAge: 86400, // 24 hours
 };
+
+if (process.env.NODE_ENV === 'development') {
+  console.log('✅ CORS Configuration:');
+  console.log('   Allowed Origins:', ALLOWED_ORIGINS);
+  console.log('   Credentials:', corsOptions.credentials);
+}
 
 app.use(cors(corsOptions));
 
@@ -53,7 +134,20 @@ app.use(cookieParser());
 
 // Socket.IO Setup
 const io = new Server(httpServer, {
-  cors: corsOptions,
+  cors: {
+    // For Socket.IO, we need to handle origins similarly
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      if (!origin || isOriginAllowed(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`Socket.IO CORS: Rejected connection from origin "${origin}"`);
+        callback(new Error('Not allowed by CORS'), false);
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  },
   path: '/ws', // Custom namespace path
 });
 

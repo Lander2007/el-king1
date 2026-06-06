@@ -35,15 +35,37 @@ export default defineConfig({
   assetsInclude: ['**/*.svg', '**/*.csv'],
 
   server: {
+    // Development proxy configuration
+    // Only used when running `npm run dev`
+    // In production (Vercel), API calls use the VITE_API_BASE_URL environment variable
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        // Use environment variable for backend URL, with fallback to localhost:7860
+        target: process.env.VITE_BACKEND_URL || 'http://localhost:7860',
         changeOrigin: true,
       },
       '/ws': {
-        target: 'http://localhost:5000',
+        // WebSocket proxy for Socket.IO development
+        target: process.env.VITE_BACKEND_URL || 'http://localhost:7860',
         ws: true,
         changeOrigin: true,
+      },
+    },
+  },
+
+  build: {
+    // Optimized build for production deployment
+    target: 'ES2020',
+    minify: 'terser',
+    sourcemap: false, // Disable source maps in production for smaller bundle
+    rollupOptions: {
+      output: {
+        // Code splitting for better caching
+        manualChunks: {
+          'vendor': ['react', 'react-dom', 'react-router', 'zustand', 'axios'],
+          'ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
+          'icons': ['lucide-react', '@mui/icons-material'],
+        },
       },
     },
   },
